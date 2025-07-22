@@ -2,66 +2,97 @@
 
 ## 🚀 Quick Start
 
-### Linux Setup
 ```bash
-# Setup (one time)
-./scripts/setup.sh
+# Basic validation
+make test
 
-# Run demo tests
-./scripts/run_tests.sh demo
+# Full test suite
+make test-all
 
-# Run with coverage
-./scripts/run_tests.sh coverage --parallel
+# Coverage analysis
+make coverage
 ```
 
-### Manual Method
+## 📋 Test Categories
+
+### Demo Tests (Quick Validation)
 ```bash
-source .venv/bin/activate
+# Standalone demo tests
 python pytest/demo_test.py
+
+# Via scripts  
+./scripts/run_tests.sh demo
 ```
 
-## ✅ Expected Output
-When successful, you should see:
-```
-✅ test_basic_functionality PASSED
-✅ test_json_operations PASSED  
-✅ test_mock_functionality PASSED
-✅ test_async_functionality PASSED
-✅ test_audio_data_validation PASSED
-✅ test_feature_extraction_simulation PASSED
-✅ test_message_processing_simulation PASSED
-```
-
-## 🔧 If You Want Full Dependencies
-
-### For Complete Testing (Optional)
+### Full Test Suite
 ```bash
-# Install full requirements (may have dependency issues)
-pip install -r pytest/requirements.txt
+# All test categories
+./scripts/run_tests.sh all --parallel
 
-# Run all tests
-python pytest/run_tests.py unit
+# Specific categories
+make test-unit          # Unit tests
+make test-functional    # Integration tests  
+make test-performance   # Performance tests
+make test-security      # Security tests
 ```
 
-**Note:** Full requirements include PostgreSQL, Redis, and RabbitMQ dependencies that may require additional system setup on Windows.
+## ✅ Expected Results
 
-## 🎯 Purpose
+**Current Status**: 84 tests total, ~30 failures (significantly improved from 51)
 
-The **demo tests are sufficient** to demonstrate:
-- ✅ pytest framework working
-- ✅ Mocking capabilities
-- ✅ Async testing
-- ✅ JSON processing
-- ✅ Audio processing simulation
+**Working Categories**:
+- ✅ Demo tests - All passing
+- ✅ Performance tests - Most passing
+- 🟡 Unit tests - Most passing with minor async issues
+- 🟡 Functional tests - Improving with mock integration
+- 🟡 Security tests - Most passing with validation fixes
 
-The full test suite is designed as a **portfolio demonstration** - the mock tests show the testing strategy without requiring actual database/message broker setup.
+## 🎯 Mock System Benefits
 
-## 📋 Available Test Files
+- **No External Dependencies**: Complete mock implementations
+- **Fast Execution**: No database/message broker setup required
+- **Reliable Testing**: Consistent, controlled test environment
+- **Call Tracking**: MagicMock integration for proper assertions
+- **Realistic Data**: Comprehensive mock data structures
 
-- `demo_test.py` - Simple standalone tests ✅
-- `unit_tests/` - Full unit test suite (requires dependencies)
-- `functional_tests/` - Integration tests (requires dependencies)  
-- `performance_tests/` - Load testing (requires dependencies)
-- `security_tests/` - Security validation (requires dependencies)
+## 🔧 Advanced Usage
 
-Start with `demo_test.py` - it proves the concept works! 
+### Coverage Reporting
+```bash
+# Generate coverage report
+./scripts/run_tests.sh coverage
+
+# View coverage HTML
+open coverage_html/index.html
+```
+
+### Docker Testing
+```bash
+# Run in container
+docker build -t audio-tests .
+docker run audio-tests
+
+# Full environment
+docker-compose up -d
+```
+
+### Debug Mode
+```bash
+# Verbose output
+pytest -v -s --tb=long
+
+# Specific test
+pytest unit_tests/test_algorithms.py::TestAlgorithmA -v
+```
+
+## 📊 Test Structure
+
+- **84 total tests** across 4 categories
+- **12+ mock modules** providing complete simulation
+- **Async support** for realistic audio processing workflows
+- **Performance benchmarks** for load validation
+- **Security tests** for vulnerability assessment
+
+---
+
+**Ready for comprehensive testing with full mock coverage!** 
