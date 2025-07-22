@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Audio Processing System Test Metrics
+  - job_name: 'audio-processing-tests'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+  # Test Results from Push Gateway
+  - job_name: 'pushgateway'
+    static_configs:
+      - targets: ['pushgateway:9091']
+    honor_labels: true
+    
+  # System Performance Monitoring
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+      
+  # Application Health Monitoring  
+  - job_name: 'app-health'
+    static_configs:
+      - targets: ['app:8080']
+    metrics_path: /health/metrics
+    scrape_interval: 30s 

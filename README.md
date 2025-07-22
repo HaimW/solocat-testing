@@ -31,6 +31,9 @@ make test-all                  # Full test suite
 - **pytest** - Testing framework with async support
 - **Mock system** - Comprehensive mock modules for all dependencies
 - **Docker** - Containerized testing environment
+- **Prometheus** - Metrics collection and monitoring
+- **Grafana** - Visual dashboards and reporting
+- **AlertManager** - Automated alerting system
 - **CI/CD** - GitHub Actions integration
 
 ## 📁 Project Structure
@@ -73,13 +76,19 @@ make coverage                  # Generate coverage report
 docker build -t audio-processing-tests .
 docker run audio-processing-tests
 
-# Full environment with services
+# Full environment with monitoring stack
 docker-compose up -d
+
+# Access monitoring dashboards
+# Grafana: http://localhost:3000 (admin/admin)
+# Prometheus: http://localhost:9090
+# AlertManager: http://localhost:9093
 ```
 
 ## 📖 Documentation
 
 - **[Quick Start](QUICK_START_LINUX.md)** - Fast setup guide
+- **[Prometheus Monitoring](docs/PROMETHEUS_MONITORING.md)** - Monitoring & alerting setup
 - **[Test Plans](docs/STP_Software_Test_Plan.md)** - Comprehensive test strategy
 - **[Test Cases](docs/TCS_Test_Case_Specification.md)** - Detailed test specifications
 - **[Test Reports](docs/TSR_Test_Summary_Report.md)** - Execution summaries

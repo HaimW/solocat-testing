@@ -1,0 +1,101 @@
+groups:
+  - name: audio_processing_test_alerts
+    rules:
+      # High Test Failure Rate
+      - alert: HighTestFailureRate
+        expr: (rate(test_execution_total{status="failed"}[5m]) / rate(test_execution_total[5m])) > 0.20
+        for: 2m
+        labels:
+          severity: warning
+          component: testing
+        annotations:
+          summary: "High test failure rate detected"
+          description: "Test failure rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          
+      # Critical Test Failure Rate  
+      - alert: CriticalTestFailureRate
+        expr: (rate(test_execution_total{status="failed"}[5m]) / rate(test_execution_total[5m])) > 0.50
+        for: 1m
+        labels:
+          severity: critical
+          component: testing
+        annotations:
+          summary: "Critical test failure rate detected"
+          description: "Test failure rate is {{ $value | humanizePercentage }} - immediate attention required"
+          
+      # Slow Algorithm Processing
+      - alert: SlowAlgorithmProcessing
+        expr: histogram_quantile(0.95, rate(algorithm_processing_seconds_bucket[5m])) > 2.0
+        for: 3m
+        labels:
+          severity: warning
+          component: algorithms
+        annotations:
+          summary: "Algorithm processing is slow"
+          description: "95th percentile of algorithm processing time is {{ $value }}s"
+          
+      # Message Broker Issues
+      - alert: MessageBrokerErrors
+        expr: rate(message_broker_operations_total{status="error"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: message_broker
+        annotations:
+          summary: "Message broker errors detected"
+          description: "Message broker error rate: {{ $value }} errors/sec"
+          
+      # Database Operation Failures
+      - alert: DatabaseOperationFailures
+        expr: rate(database_operations_total{status="error"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database operation failures"
+          description: "Database error rate: {{ $value }} errors/sec"
+          
+      # Security Test Failures
+      - alert: SecurityTestFailures
+        expr: increase(security_test_results_total{result="fail"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Security tests failing"
+          description: "{{ $value }} security tests have failed in the last 10 minutes"
+          
+      # System Health Issues
+      - alert: SystemHealthDegraded
+        expr: system_health_status < 1
+        for: 1m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "System health degraded"
+          description: "System component {{ $labels.component }} health status is {{ $value }}"
+          
+      # Long Test Duration
+      - alert: LongTestDuration
+        expr: histogram_quantile(0.95, rate(test_duration_seconds_bucket[10m])) > 300
+        for: 5m
+        labels:
+          severity: info
+          component: performance
+        annotations:
+          summary: "Tests taking too long"
+          description: "95th percentile test duration is {{ $value }}s"
+          
+      # No Tests Running
+      - alert: NoTestsRunning
+        expr: rate(test_execution_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          component: testing
+        annotations:
+          summary: "No tests running"
+          description: "No test executions detected for 10 minutes" 

@@ -11,10 +11,13 @@ services:
       - DATABASE_URL=postgresql://testuser:testpass@postgres:5432/audio_test_db
       - REDIS_URL=redis://redis:6379/0
       - RABBITMQ_URL=amqp://testuser:testpass@rabbitmq:5672//
+      - PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091
     depends_on:
       - postgres
       - redis
       - rabbitmq
+      - prometheus
+      - pushgateway
     volumes:
       - ./test-reports:/app/test-reports
       - ./coverage_html:/app/coverage_html
@@ -22,6 +25,8 @@ services:
       - .:/app:rw
     networks:
       - audio_test_network
+    ports:
+      - "8000:8000"  # Metrics endpoint
     command: ["./scripts/run_tests.sh", "all", "--parallel"]
 
   # PostgreSQL Database
@@ -59,61 +64,135 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 3s
-      retries: 3
+      timeout: 5s
+      retries: 5
 
   # RabbitMQ Message Broker
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:3.12-management-alpine
     container_name: audio_rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: testuser
       RABBITMQ_DEFAULT_PASS: testpass
       RABBITMQ_DEFAULT_VHOST: /
     ports:
-      - "5672:5672"    # AMQP port
-      - "15672:15672"  # Management UI
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - audio_test_network
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 30s
-      timeout: 30s
-      retries: 3
+      timeout: 10s
+      retries: 5
 
-  # Optional: Monitoring with Prometheus
+  # Prometheus Monitoring
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.47.0
     container_name: audio_prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - prometheus_data:/prometheus
     networks:
       - audio_test_network
-    profiles:
-      - monitoring
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    restart: unless-stopped
 
-  # Optional: Grafana for visualization
+  # Grafana Dashboard
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.1.0
     container_name: audio_grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
       - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - audio_test_network
-    profiles:
-      - monitoring
     depends_on:
       - prometheus
+    restart: unless-stopped
+
+  # Prometheus Push Gateway
+  pushgateway:
+    image: prom/pushgateway:v1.6.2
+    container_name: audio_pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - audio_test_network
+    restart: unless-stopped
+
+  # Alert Manager
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: audio_alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./docker/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - audio_test_network
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    restart: unless-stopped
+
+  # Node Exporter for System Metrics
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: audio_node_exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - audio_test_network
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+
+  # Test Metrics Server
+  metrics-server:
+    build:
+      context: .
+      dockerfile: docker/metrics-server/Dockerfile
+    container_name: audio_metrics_server
+    ports:
+      - "8001:8001"
+    environment:
+      - PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091
+    volumes:
+      - ./test-reports:/app/test-reports:ro
+    networks:
+      - audio_test_network
+    depends_on:
+      - pushgateway
+    restart: unless-stopped
 
 volumes:
   postgres_data:
@@ -125,6 +204,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  alertmanager_data:
     driver: local
 
 networks:
