@@ -1,7 +1,7 @@
 """
 Mock database module for testing
 """
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 import time
 import uuid
 
@@ -142,6 +142,10 @@ class DataWriter:
     def __init__(self, db_connection):
         self.db_connection = db_connection
         self.write_count = 0
+        
+        # Create a session for SQLAlchemy integration
+        from database.models import Session
+        self.session = Session()
     
     def write_audio_data(self, audio_data):
         """Mock audio data writing"""
@@ -164,11 +168,200 @@ class DataWriter:
         
         self.write_count += len(data_list)
         return record_ids
+    
+    async def write_feature_type_a(self, feature_data):
+        """Write Feature Type A to database with proper session calls"""
+        from database.models import FeatureTypeA
+        
+        # Create feature instance
+        feature = FeatureTypeA(**feature_data)
+        
+        # Add to session (this is what the test expects)
+        self.session.add(feature)
+        self.session.commit()
+        
+        self.write_count += 1
+        return feature
+    
+    async def write_feature_type_b(self, feature_data):
+        """Write Feature Type B to database with proper session calls"""
+        from database.models import FeatureTypeB
+        
+        # Create feature instance  
+        feature = FeatureTypeB(**feature_data)
+        
+        # Add to session (this is what the test expects)
+        self.session.add(feature)
+        self.session.commit()
+        
+        self.write_count += 1
+        return feature
 
 
-# Mock models module
-models = Mock()
-models.AudioData = AudioData
-models.FeatureData = FeatureData
-models.DatabaseConnection = DatabaseConnection
-models.DataWriter = DataWriter 
+
+
+class Session:
+    """Mock database session"""
+    
+    def __init__(self):
+        self.transaction_active = False
+        self.changes = []
+        self.queries = []
+        self.add = MagicMock()
+        self.commit = MagicMock()
+        self.rollback = MagicMock()
+        self.close = MagicMock()
+    
+    def query(self, model):
+        """Mock query"""
+        query_mock = Mock()
+        query_mock.filter = Mock(return_value=query_mock)
+        query_mock.filter_by = Mock(return_value=query_mock)
+        query_mock.all = Mock(return_value=[])
+        query_mock.first = Mock(return_value=None)
+        query_mock.count = Mock(return_value=0)
+        return query_mock
+    
+    def add(self, instance):
+        """Add instance to session"""
+        self.changes.append(('add', instance))
+    
+    def delete(self, instance):
+        """Delete instance from session"""
+        self.changes.append(('delete', instance))
+    
+    def commit(self):
+        """Commit transaction"""
+        self.changes.clear()
+    
+    def rollback(self):
+        """Rollback transaction"""
+        self.changes.clear()
+    
+    def close(self):
+        """Close session"""
+        pass
+
+
+class FieldEncryption:
+    """Mock field encryption"""
+    
+    def __init__(self, key=None):
+        self.key = key or "mock_db_encryption_key"
+    
+    def encrypt_field(self, value):
+        """Encrypt database field"""
+        if isinstance(value, str):
+            return f"encrypted_{hash(value) % 10000}"
+        return f"encrypted_{value}"
+    
+    def decrypt_field(self, encrypted_value):
+        """Decrypt database field"""
+        if isinstance(encrypted_value, str) and encrypted_value.startswith("encrypted_"):
+            return encrypted_value.replace("encrypted_", "decrypted_")
+        return encrypted_value
+
+
+class FeatureQuery:
+    """Mock feature query class"""
+    
+    def __init__(self, session):
+        self.session = session
+    
+    def get_features_by_audio_id(self, audio_id):
+        """Get features by audio ID"""
+        return [
+            FeatureData(
+                feature_id="feature_1",
+                audio_id=audio_id,
+                features=[0.1, 0.2, 0.3]
+            )
+        ]
+    
+    def get_features_by_timerange(self, start_time, end_time):
+        """Get features by time range"""
+        return [
+            FeatureData(
+                feature_id="feature_1",
+                features=[0.1, 0.2, 0.3]
+            )
+        ]
+    
+    def filter_by_confidence(self, min_confidence):
+        """Filter features by confidence"""
+        return self
+
+
+def get_session():
+    """Get database session"""
+    return Session()
+
+
+# Mock submodules
+class FeatureTypeA:
+    """Mock FeatureTypeA model"""
+    
+    def __init__(self, feature_id=None, audio_id=None, features=None):
+        self.feature_id = feature_id or str(uuid.uuid4())
+        self.audio_id = audio_id or str(uuid.uuid4())
+        self.features = features or [0.1, 0.2, 0.3]
+        self.timestamp = time.time()
+
+
+class FeatureTypeB:
+    """Mock FeatureTypeB model"""
+    
+    def __init__(self, feature_id=None, audio_id=None, features=None):
+        self.feature_id = feature_id or str(uuid.uuid4())
+        self.audio_id = audio_id or str(uuid.uuid4())
+        self.features = features or [0.4, 0.5, 0.6]
+        self.timestamp = time.time()
+
+
+class EncryptedFeature:
+    """Mock EncryptedFeature model"""
+    
+    def __init__(self, feature_id=None, encrypted_data=None):
+        self.feature_id = feature_id or str(uuid.uuid4())
+        self.encrypted_data = encrypted_data or "encrypted_feature_data"
+        self.encryption_key_id = "key_001"
+        self.timestamp = time.time()
+    
+    def get_encrypted_sensitive_data(self):
+        """Get encrypted sensitive data"""
+        return "encrypted_value"
+    
+    def get_decrypted_sensitive_data(self):
+        """Get decrypted sensitive data"""
+        return "decrypted_sensitive_data"
+
+
+class models:
+    """Mock database.models module"""
+    AudioData = AudioData
+    FeatureData = FeatureData
+    FeatureTypeA = FeatureTypeA
+    FeatureTypeB = FeatureTypeB
+    EncryptedFeature = EncryptedFeature
+    Session = Session
+
+
+class connection:
+    """Mock database.connection module"""
+    DatabaseConnection = DatabaseConnection
+    get_session = staticmethod(get_session)
+
+
+class writer:
+    """Mock database.writer module"""
+    DataWriter = DataWriter
+
+
+class encryption:
+    """Mock database.encryption module"""
+    FieldEncryption = FieldEncryption
+
+
+class queries:
+    """Mock database.queries module"""
+    FeatureQuery = FeatureQuery 
