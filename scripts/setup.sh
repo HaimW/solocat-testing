@@ -22,18 +22,9 @@ source .venv/bin/activate
 echo "⬆️ Upgrading pip..."
 pip install --upgrade pip
 
-# Install minimal requirements first
-echo "📥 Installing minimal requirements..."
-pip install -r pytest/requirements-minimal.txt
-
-# Try to install full requirements (with fallback)
-echo "📥 Attempting to install full requirements..."
-if pip install -r pytest/requirements.txt; then
-    echo "✅ Full requirements installed successfully"
-else
-    echo "⚠️ Some dependencies failed, using minimal setup"
-    echo "This is normal on systems without PostgreSQL development libraries"
-fi
+# Install requirements
+echo "📥 Installing requirements..."
+pip install -r pytest/requirements.txt
 
 # Make scripts executable
 chmod +x scripts/*.sh
