@@ -52,19 +52,32 @@ jobs:
       run: chmod +x scripts/*.sh
       
     - name: Run demo tests
-      run: ./scripts/run_tests.sh demo
+      run: python pytest/demo_test.py
       
     - name: Run unit tests
-      run: ./scripts/run_tests.sh unit --verbose
+      run: |
+        python -m pytest pytest/unit_tests/ -v --tb=short \
+          -p no:postgresql -p no:kubernetes
       
     - name: Run functional tests
-      run: ./scripts/run_tests.sh functional
+      run: |
+        python -m pytest pytest/functional_tests/ -v --tb=short \
+          -p no:postgresql -p no:kubernetes
       
     - name: Run security tests
-      run: ./scripts/run_tests.sh security
+      run: |
+        python -m pytest pytest/security_tests/ -v --tb=short \
+          -p no:postgresql -p no:kubernetes
       
     - name: Generate coverage report
-      run: ./scripts/run_tests.sh coverage --parallel
+      run: |
+        python -m pytest pytest/ -v --tb=short \
+          -p no:postgresql -p no:kubernetes \
+          --ignore=pytest/demo_test.py \
+          --cov=pytest \
+          --cov-report=html:coverage_html \
+          --cov-report=xml:coverage.xml \
+          --cov-report=term-missing
       
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -107,7 +120,7 @@ jobs:
         
     - name: Run demo tests (Ubuntu/macOS)
       if: runner.os != 'Windows'
-      run: ./scripts/run_tests.sh demo
+      run: python pytest/demo_test.py
       
     - name: Run demo tests (Windows)
       if: runner.os == 'Windows'
@@ -174,7 +187,10 @@ jobs:
         chmod +x scripts/*.sh
         
     - name: Run performance tests
-      run: ./scripts/run_tests.sh performance
+      run: |
+        python -m pytest pytest/performance_tests/ -v --tb=short \
+          -p no:postgresql -p no:kubernetes \
+          -m "not slow"
       
     - name: Upload performance results
       uses: actions/upload-artifact@v3
@@ -313,8 +329,10 @@ jobs:
         REDIS_URL: redis://localhost:6379/0
         RABBITMQ_URL: amqp://testuser:testpass@localhost:5672//
       run: |
-        python scripts/init_db.sql || true
-        ./scripts/run_tests.sh functional
+        # Initialize database
+        PGPASSWORD=testpass psql -h localhost -U testuser -d audio_test_db -f scripts/init_db.sql || true
+        # Run functional tests
+        python -m pytest pytest/functional_tests/ -v --tb=short
 
   # Deployment readiness check
   deployment-check:

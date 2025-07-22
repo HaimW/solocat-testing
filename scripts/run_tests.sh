@@ -29,9 +29,14 @@ print_error() {
 # Function to check if virtual environment is activated
 check_venv() {
     if [[ -z "$VIRTUAL_ENV" ]]; then
-        print_warning "Virtual environment not activated"
-        print_status "Activating virtual environment..."
-        source "$PROJECT_ROOT/.venv/bin/activate"
+        if [[ -f "$PROJECT_ROOT/.venv/bin/activate" ]]; then
+            print_warning "Virtual environment not activated"
+            print_status "Activating virtual environment..."
+            source "$PROJECT_ROOT/.venv/bin/activate"
+        else
+            print_warning "No virtual environment found, using system Python"
+            print_status "For local development, run: make setup"
+        fi
     fi
 }
 
