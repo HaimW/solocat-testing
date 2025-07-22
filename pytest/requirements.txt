@@ -13,12 +13,12 @@ responses>=0.23.0
 
 # Database testing
 pytest-postgresql>=2.3.0
-sqlalchemy>=2.0.0
-alembic>=1.11.0
+sqlalchemy>=1.4.0
+alembic>=1.8.0
 
 # Message broker testing
-aio-pika>=9.0.0
-kombu>=5.3.0
+aio-pika>=8.0.0
+kombu>=5.2.0
 
 # Performance testing
 psutil>=5.9.0
@@ -30,13 +30,13 @@ cryptography>=41.0.0
 pyjwt>=2.8.0
 passlib>=1.7.0
 
-# Kubernetes testing
-kubernetes>=27.2.0
-pytest-kubernetes>=0.6.0
+# Kubernetes testing (optional - can be problematic)
+# kubernetes>=27.2.0  # Optional - large dependency
+# pytest-kubernetes>=0.3.1  # Optional
 
 # Async support
 aiofiles>=23.0.0
-aioredis>=2.0.0
+# aioredis>=2.0.0  # Disabled - Python 3.13 compatibility issue
 asyncpg>=0.28.0
 
 # Mocking and fixtures
