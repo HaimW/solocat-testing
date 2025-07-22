@@ -1,6 +1,6 @@
 # 🎵 Audio Processing System - Testing Framework
 
-A comprehensive testing framework for a distributed audio processing system with **cross-platform** compatibility.
+A comprehensive testing framework for a distributed audio processing system built for **Linux**.
 
 ## 🏗️ System Architecture
 
@@ -27,7 +27,7 @@ graph TD
 
 ## 🚀 Quick Start
 
-### Linux/Unix
+### Linux Setup
 ```bash
 # One-command setup and test
 git clone <repository>
@@ -48,18 +48,6 @@ make docker-up
 make docker-run
 ```
 
-### Windows
-```cmd
-REM Clone and setup
-git clone <repository>
-cd audio-processing-system
-scripts\setup.bat
-
-REM Run tests
-scripts\run_tests.bat demo
-scripts\run_tests.bat all -n auto
-```
-
 ## 📋 Testing Framework
 
 ### Test Categories
@@ -72,9 +60,7 @@ scripts\run_tests.bat all -n auto
 ### Platform Support
 | Platform | Status | Python | Notes |
 |----------|--------|--------|-------|
-| **Linux** | ✅ Recommended | 3.9+ | Full feature support |
-| **macOS** | ✅ Supported | 3.9+ | Full feature support |
-| **Windows** | ✅ Compatible | 3.9+ | Minimal dependencies mode |
+| **Linux** | ✅ Supported | 3.9+ | Full feature support |
 
 ## 🛠️ Technology Stack
 
@@ -106,17 +92,10 @@ scripts\run_tests.bat all -n auto
 
 ### Basic Commands
 ```bash
-# Linux/Unix
 ./scripts/run_tests.sh demo              # Demo tests
 ./scripts/run_tests.sh unit --verbose    # Unit tests
 ./scripts/run_tests.sh coverage          # Coverage report
 ./scripts/run_tests.sh all --parallel    # All tests
-
-# Windows
-scripts\run_tests.bat demo               # Demo tests
-scripts\run_tests.bat unit -v            # Unit tests  
-scripts\run_tests.bat coverage           # Coverage report
-scripts\run_tests.bat all -n auto        # All tests
 ```
 
 ### Advanced Commands
@@ -150,24 +129,19 @@ audio-processing-system/
 │   ├── TER_Test_Execution_Report.md
 │   ├── TSR_Test_Summary_Report.md
 │   └── DR_Defect_Report.md
-├── scripts/                   # Cross-platform scripts
+├── scripts/                   # Linux automation scripts
 │   ├── setup.sh              # Linux setup
-│   ├── setup.bat             # Windows setup
 │   ├── run_tests.sh           # Linux test runner
-│   └── run_tests.bat          # Windows test runner
 └── .gitignore                 # Git ignore rules
 ```
 
 ## 🔧 Configuration
 
 ### Requirements Files
-- `requirements.txt` - Full dependencies (Linux recommended)
-- `requirements-minimal.txt` - Essential dependencies only
-- `requirements-core.txt` - Windows-compatible subset
+- `requirements.txt` - Full dependencies for Linux
 
 ### Configuration Files
-- `pytest.ini` - Full pytest configuration
-- `pytest-minimal.ini` - Minimal configuration (Windows)
+- `pytest.ini` - Pytest configuration
 
 ### Environment Variables
 ```bash
@@ -220,24 +194,7 @@ docker build -t audio-processing-tests .
 docker run --rm audio-processing-tests
 ```
 
-## 🪟 Windows Compatibility
 
-### Prerequisites
-```cmd
-REM Install Python 3.9+ from python.org
-REM Install Git for Windows
-python --version
-git --version
-```
-
-### Limited Dependencies Mode
-On Windows, some dependencies (PostgreSQL, native libraries) may not install easily. The framework automatically falls back to minimal mode with mocks:
-
-```cmd
-REM This will work even without PostgreSQL
-scripts\run_tests.bat demo
-scripts\run_tests.bat unit
-```
 
 ## 📖 Documentation
 
@@ -273,7 +230,7 @@ cd audio-processing-system
 - **Coverage target:** >90%
 - **Test types:** Unit, Integration, Performance, Security
 - **Documentation:** All functions documented
-- **Cross-platform:** Test on Linux and Windows
+- **Platform:** Linux testing
 
 ## 📄 License
 
@@ -284,10 +241,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - ✅ **97.6%** test pass rate
 - ✅ **94.2%** code coverage  
 - ✅ **100%** security test compliance
-- ✅ **Cross-platform** compatibility
+- ✅ **Linux** optimized
 - ✅ **IEEE 829** documentation standards
 - ✅ **CI/CD** ready configuration
 
 ---
 
-**Works everywhere. Optimized for Linux.** 🐧🪟🍎 
+**Built for Linux.** 🐧 

@@ -1,4 +1,4 @@
-# Audio Processing System - Cross-Platform Makefile
+# Audio Processing System - Linux Makefile
 # Comprehensive build and test automation
 
 .PHONY: help setup install test clean docker docker-up docker-down lint format check coverage docs
@@ -26,19 +26,15 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(YELLOW)%-20s$(RESET) %s\n", $$1, $$2}'
 
 # Setup and Installation
-setup: ## Initial setup for Linux/Unix systems (recommended)
+setup: ## Initial setup for Linux systems
 	@echo "$(GREEN)Setting up Audio Processing System...$(RESET)"
 	@chmod +x scripts/*.sh
 	@./scripts/setup.sh
 
-setup-windows: ## Initial setup for Windows systems
-	@echo "$(GREEN)Setting up Audio Processing System for Windows...$(RESET)"
-	@scripts\setup.bat
-
 install: ## Install dependencies in existing virtual environment
 	@echo "$(GREEN)Installing dependencies...$(RESET)"
 	@$(PIP) install --upgrade pip
-	@$(PIP) install -r pytest/requirements.txt || $(PIP) install -r pytest/requirements-minimal.txt
+	@$(PIP) install -r pytest/requirements.txt
 
 install-dev: ## Install development dependencies
 	@echo "$(GREEN)Installing development dependencies...$(RESET)"
@@ -166,7 +162,7 @@ check-docker: ## Check Docker environment
 	@docker-compose --version
 	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# Platform-specific targets
+# System dependencies
 linux-deps: ## Install Linux system dependencies (Ubuntu/Debian)
 	@echo "$(GREEN)Installing Linux system dependencies...$(RESET)"
 	@sudo apt-get update

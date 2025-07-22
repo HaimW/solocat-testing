@@ -1,4 +1,4 @@
-# Quick Start Guide - Linux
+# Quick Start Guide
 
 ## 🚀 One-Command Setup
 

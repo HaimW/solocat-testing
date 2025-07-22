@@ -1,8 +1,8 @@
-# How to Run Tests - Simple Guide
+# How to Run Tests - Guide
 
-## 🚀 Quick Start (Cross-Platform)
+## 🚀 Quick Start
 
-### Linux/Unix (Recommended)
+### Linux Setup
 ```bash
 # Setup (one time)
 ./scripts/setup.sh
@@ -14,26 +14,9 @@
 ./scripts/run_tests.sh coverage --parallel
 ```
 
-### Windows
-```cmd
-REM Setup (one time)
-scripts\setup.bat
-
-REM Run demo tests
-scripts\run_tests.bat demo
-
-REM Run with coverage
-scripts\run_tests.bat coverage -n auto
-```
-
-### Manual Method (Any OS)
+### Manual Method
 ```bash
-# Linux/Unix
 source .venv/bin/activate
-python pytest/demo_test.py
-
-# Windows
-.venv\Scripts\activate
 python pytest/demo_test.py
 ```
 

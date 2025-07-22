@@ -8,29 +8,15 @@ import time
 from unittest.mock import Mock, AsyncMock
 from typing import Generator, Dict, Any
 
-# Optional imports with fallbacks
-try:
-    import aioredis
-    HAS_REDIS = True
-except ImportError:
-    aioredis = Mock()
-    HAS_REDIS = False
+# Required imports for Linux
+import aioredis
+import aiormq
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-try:
-    import aiormq
-    HAS_RABBITMQ = True
-except ImportError:
-    aiormq = Mock()
-    HAS_RABBITMQ = False
-
-try:
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    HAS_SQLALCHEMY = True
-except ImportError:
-    create_engine = Mock()
-    sessionmaker = Mock()
-    HAS_SQLALCHEMY = False
+HAS_REDIS = True
+HAS_RABBITMQ = True
+HAS_SQLALCHEMY = True
 
 
 @pytest.fixture(scope="session")

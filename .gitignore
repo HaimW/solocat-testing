@@ -194,12 +194,6 @@ tramp
 ehthumbs.db
 Thumbs.db
 
-# Windows
-*.tmp
-*.bak
-*.swp
-*~.nib
-
 # Linux
 *~
 
