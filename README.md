@@ -92,10 +92,14 @@ make docker-run
 
 ### Basic Commands
 ```bash
+make test                                # Working tests only (recommended)
 ./scripts/run_tests.sh demo              # Demo tests
-./scripts/run_tests.sh unit --verbose    # Unit tests
+python pytest/run_working_tests.py      # Working tests script
+
+# Full test suite (requires implementation modules)
+./scripts/run_tests.sh unit --verbose    # Unit tests (will fail without implementation)
 ./scripts/run_tests.sh coverage          # Coverage report
-./scripts/run_tests.sh all --parallel    # All tests
+./scripts/run_tests.sh all --parallel    # All tests (will fail without implementation)
 ```
 
 ### Advanced Commands

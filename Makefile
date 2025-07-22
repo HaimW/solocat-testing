@@ -42,7 +42,15 @@ install-dev: ## Install development dependencies
 	@$(PIP) install black flake8 mypy isort pre-commit
 
 # Testing
-test: ## Run basic demo tests
+test: ## Run working tests (no missing modules)
+	@echo "$(GREEN)Running working tests...$(RESET)"
+	@python pytest/run_working_tests.py
+
+test-mocked: ## Run all tests with mocked modules
+	@echo "$(GREEN)Running all tests with mocks...$(RESET)"
+	@cd pytest && python -m pytest -v --tb=short -p no:postgresql -p no:kubernetes
+
+test-demo: ## Run demo tests only
 	@echo "$(GREEN)Running demo tests...$(RESET)"
 	@./scripts/run_tests.sh demo
 

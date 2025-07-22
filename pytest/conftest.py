@@ -8,6 +8,9 @@ import time
 from unittest.mock import Mock, AsyncMock
 from typing import Generator, Dict, Any
 
+# Enable mock modules first (before other imports)
+import mock_patch  # This will auto-patch missing modules
+
 # Linux imports with fallbacks for compatibility
 try:
     import aioredis

@@ -39,14 +39,16 @@ chmod +x scripts/*.sh
 
 ### 3. Run Tests
 ```bash
+# Working tests only (recommended - no missing modules)
+make test
+
 # Demo tests (quick verification)
 ./scripts/run_tests.sh demo
 
-# All tests with parallel execution
-./scripts/run_tests.sh all --parallel
-
-# Generate coverage report
-./scripts/run_tests.sh coverage
+# Note: Full test suite requires implementation modules
+# These will fail until you implement the actual audio processing code:
+# ./scripts/run_tests.sh all --parallel
+# ./scripts/run_tests.sh coverage
 ```
 
 ## 🐳 Docker Alternative
