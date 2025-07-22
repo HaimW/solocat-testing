@@ -48,7 +48,7 @@ test: ## Run working tests (no missing modules)
 
 test-mocked: ## Run all tests with mocked modules
 	@echo "$(GREEN)Running all tests with mocks...$(RESET)"
-	@cd pytest && python -m pytest -v --tb=short -p no:postgresql -p no:kubernetes
+	@cd pytest && python3 -m pytest --override-ini="addopts=" -v --tb=short -p no:postgresql -p no:kubernetes
 
 test-demo: ## Run demo tests only
 	@echo "$(GREEN)Running demo tests...$(RESET)"
@@ -234,3 +234,35 @@ info: ## Show project information
 	@echo "  make test      - Run demo tests"
 	@echo "  make test-all  - Run all tests"
 	@echo "  make coverage  - Generate coverage report" 
+# HTML Report Generation
+.PHONY: test-with-report test-open-report html-report
+test-with-report:
+	@echo "???? Running tests with automatic HTML report generation..."
+	@mkdir -p test-reports
+	cd pytest && python3 -m pytest --override-ini="addopts=" --junit-xml=../test_results.xml
+	@echo "???? HTML report automatically generated in test-reports/"
+
+test-open-report: test-with-report
+	@echo "???? Opening HTML report..."
+	@if [ -f test-reports/test_results_report.html ]; then \
+		xdg-open test-reports/test_results_report.html 2>/dev/null || \
+		open test-reports/test_results_report.html 2>/dev/null || \
+		echo "Please open test-reports/test_results_report.html manually"; \
+	else \
+		echo "??? HTML report not found. Check test execution."; \
+	fi
+
+html-report:
+	@echo "???? Converting XML to HTML reports..."
+	@mkdir -p test-reports
+	@if [ -f test_results.xml ]; then \
+		python3 scripts/xml_to_html_converter.py test_results.xml -o test-reports/latest_report.html; \
+		echo "??? HTML report: test-reports/latest_report.html"; \
+	else \
+		echo "??? No test_results.xml found. Run tests first."; \
+	fi
+
+html-report-open: html-report
+	@xdg-open test-reports/latest_report.html 2>/dev/null || \
+	 open test-reports/latest_report.html 2>/dev/null || \
+	 echo "Please open test-reports/latest_report.html manually"

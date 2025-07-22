@@ -207,7 +207,11 @@ def pytest_configure(config):
     ) 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Auto-generate HTML reports from XML files after test run."""
+    """
+    Called after whole test run finished, right before
+    returning the exit status to the system.
+    Auto-generate HTML reports from XML files.
+    """
     import glob
     import os
     import sys
@@ -215,47 +219,66 @@ def pytest_sessionfinish(session, exitstatus):
     
     print(f"\n???? Post-test processing...")
     
-    # Find XML result files - check current directory and parent
-    xml_files = glob.glob("test_results*.xml") + glob.glob("../test_results*.xml")
+    # Find XML result files
+    xml_patterns = [
+        "test_results*.xml",
+        "*test*.xml", 
+        "junit*.xml",
+        "test-reports/*.xml"
+    ]
+    
+    xml_files = []
+    for pattern in xml_patterns:
+        xml_files.extend(glob.glob(pattern))
+    
+    # Remove duplicates and filter for actual test result files
+    xml_files = list(set(xml_files))
     xml_files = [f for f in xml_files if os.path.exists(f) and os.path.getsize(f) > 0]
     
     if not xml_files:
-        print(f"???? No XML test result files found")
+        print(f"???? No XML test result files found for HTML conversion")
         return
     
-    # Get script directory
-    current_dir = Path(__file__).parent
-    script_dir = current_dir.parent if current_dir.name == 'pytest' else current_dir
+    # Get the converter script path
+    script_dir = Path(__file__).parent.parent
     converter_script = script_dir / "scripts" / "xml_to_html_converter.py"
     
     if not converter_script.exists():
-        print(f"?????? HTML converter not found: {converter_script}")
+        print(f"??????  HTML converter script not found: {converter_script}")
         return
     
-    # Create reports directory
-    reports_dir = script_dir / "test-reports"
-    reports_dir.mkdir(exist_ok=True)
-    
-    # Generate HTML reports
+    # Generate HTML reports for each XML file
     reports_generated = 0
     for xml_file in xml_files:
         try:
-            base_name = Path(xml_file).stem
-            html_file = reports_dir / f"{base_name}_report.html"
+            # Create test-reports directory if it doesn't exist
+            os.makedirs("test-reports", exist_ok=True)
             
-            # Import converter
+            # Generate HTML report name
+            base_name = Path(xml_file).stem
+            html_file = f"test-reports/{base_name}_report.html"
+            
+            # Import and use the converter
             sys.path.insert(0, str(script_dir / "scripts"))
             from xml_to_html_converter import XMLToHTMLConverter
             
-            converter = XMLToHTMLConverter(xml_file, str(html_file))
+            converter = XMLToHTMLConverter(xml_file, html_file)
             result = converter.convert()
             
             if result:
                 reports_generated += 1
-                print(f"???? Generated: {result}")
+                print(f"???? Generated HTML report: {result}")
             
         except Exception as e:
-            print(f"?????? Error generating report for {xml_file}: {e}")
+            print(f"??????  Could not generate HTML report for {xml_file}: {e}")
     
     if reports_generated > 0:
-        print(f"??? Generated {reports_generated} HTML report(s) in test-reports/")
+        print(f"??? Successfully generated {reports_generated} HTML report(s)")
+        print(f"???? Open test-reports/ directory to view reports")
+    
+    # Also try to generate the existing custom test report
+    try:
+        from utils.test_reporter import generate_final_report
+        generate_final_report()
+    except Exception as e:
+        print(f"???? Custom test reporter: {e}")
