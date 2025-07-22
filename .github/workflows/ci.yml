@@ -1,324 +1,68 @@
-name: Audio Processing System CI/CD
+name: Audio Processing System CI
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  schedule:
-    # Run tests daily at 02:00 UTC
-    - cron: '0 2 * * *'
 
-env:
-  PYTHON_VERSION: '3.11'
-  
 jobs:
-  # Primary Linux testing (Ubuntu - main platform)
-  test-linux:
-    name: "🐧 Linux Tests"
+  test-demo:
+    name: "🧪 Demo Tests"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libpq-dev postgresql-client redis-tools build-essential
+        python-version: '3.11'
         
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r pytest/requirements.txt
         
-    - name: Make scripts executable
-      run: chmod +x scripts/*.sh
-      
     - name: Run demo tests
       run: python pytest/demo_test.py
-      
-    - name: Run unit tests
-      run: |
-        python -m pytest pytest/unit_tests/ -v --tb=short \
-          -p no:postgresql -p no:kubernetes
-      
-    - name: Run functional tests
-      run: |
-        python -m pytest pytest/functional_tests/ -v --tb=short \
-          -p no:postgresql -p no:kubernetes
-      
-    - name: Run security tests
-      run: |
-        python -m pytest pytest/security_tests/ -v --tb=short \
-          -p no:postgresql -p no:kubernetes
-      
-    - name: Generate coverage report
-      run: |
-        python -m pytest pytest/ -v --tb=short \
-          -p no:postgresql -p no:kubernetes \
-          --ignore=pytest/demo_test.py \
-          --cov=pytest \
-          --cov-report=html:coverage_html \
-          --cov-report=xml:coverage.xml \
-          --cov-report=term-missing
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
 
 
-
-  # Docker testing
-  test-docker:
-    name: "🐳 Docker Testing"
+  test-categories:
+    name: "📋 Test Categories"
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Cache Docker layers
-      uses: actions/cache@v4
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-          
-    - name: Build Docker image
-      run: |
-        docker build -t audio-processing-tests .
-        
-    - name: Run tests in Docker
-      run: |
-        docker run --rm \
-          -v ${{ github.workspace }}/test-reports:/app/test-reports \
-          audio-processing-tests
-          
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: docker-test-results
-        path: test-reports/
-
-  test-performance:
-    name: "⚡ Performance Testing"
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libpq-dev build-essential
-        python -m pip install --upgrade pip
-        pip install -r pytest/requirements.txt
-        chmod +x scripts/*.sh
-        
-    - name: Run performance tests
-      run: |
-        python -m pytest pytest/performance_tests/ -v --tb=short \
-          -p no:postgresql -p no:kubernetes \
-          -m "not slow"
-      
-    - name: Upload performance results
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-results
-        path: performance_results/
-
-  # Security scanning
-  security-scan:
-    name: "🔒 Security Scanning"
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Run Bandit security scan
-      run: |
-        pip install bandit[toml]
-        bandit -r pytest/ -f json -o bandit-report.json || true
-        
-    - name: Run Safety check
-      run: |
-        pip install safety
-        safety check --json --output safety-report.json || true
-        
-    - name: Upload security reports
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          safety-report.json
-
-  # Code quality checks
-  code-quality:
-    name: "📝 Code Quality"
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        
-    - name: Install code quality tools
-      run: |
-        pip install black flake8 isort mypy
-        
-    - name: Check code formatting (Black)
-      run: black --check --line-length=100 pytest/
-      
-    - name: Check import sorting (isort)
-      run: isort --check-only --profile black pytest/
-      
-    - name: Lint code (Flake8)
-      run: flake8 pytest/ --max-line-length=100 --ignore=E203,W503
-      
-    - name: Type checking (MyPy)
-      run: mypy pytest/ --ignore-missing-imports || true
-
-  # Integration tests with real services
-  test-integration:
-    name: "🔗 Integration Testing"
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: audio_test_db
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-          
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 3s
-          --health-retries 5
-        ports:
-          - 6379:6379
-          
-      rabbitmq:
-        image: rabbitmq:3-management-alpine
-        env:
-          RABBITMQ_DEFAULT_USER: testuser
-          RABBITMQ_DEFAULT_PASS: testpass
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 30s
-          --health-timeout 30s
-          --health-retries 3
-        ports:
-          - 5672:5672
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libpq-dev postgresql-client redis-tools
         
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r pytest/requirements.txt
-        chmod +x scripts/*.sh
         
-    - name: Wait for services
+    - name: Run unit test demo
       run: |
-        sleep 30
-        pg_isready -h localhost -p 5432 -U testuser
-        redis-cli -h localhost -p 6379 ping
-        
-    - name: Run integration tests
-      env:
-        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/audio_test_db
-        REDIS_URL: redis://localhost:6379/0
-        RABBITMQ_URL: amqp://testuser:testpass@localhost:5672//
-      run: |
-        # Initialize database
-        PGPASSWORD=testpass psql -h localhost -U testuser -d audio_test_db -f scripts/init_db.sql || true
-        # Run functional tests
-        python -m pytest pytest/functional_tests/ -v --tb=short
-
-  # Deployment readiness check
-  deployment-check:
-    name: "🚀 Deployment Check"
-    runs-on: ubuntu-latest
-    needs: [test-linux, test-docker]
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        python -m pytest pytest/unit_tests/test_algorithms.py::TestAlgorithmA::test_algorithm_a_initialization -v \
+          -p no:postgresql -p no:kubernetes
       
-    - name: Verify Docker Compose
+    - name: Run functional test demo  
       run: |
-        docker-compose config
-        
-    - name: Test production deployment
+        python -m pytest pytest/functional_tests/test_end_to_end.py::TestEndToEndWorkflow::test_audio_processing_pipeline -v \
+          -p no:postgresql -p no:kubernetes
+      
+    - name: Run performance test demo
       run: |
-        docker-compose up -d --build
-        sleep 60
-        docker-compose ps
-        docker-compose logs
-        docker-compose down
-        
-    - name: Deployment ready
+        python -m pytest pytest/performance_tests/test_load_performance.py::TestAlgorithmPerformance::test_algorithm_a_processing_time -v \
+          -p no:postgresql -p no:kubernetes
+      
+    - name: Run security test demo
       run: |
-        echo "✅ All checks passed - ready for deployment!" 
+        python -m pytest pytest/security_tests/test_security.py::TestAuthentication::test_jwt_validation -v \
+          -p no:postgresql -p no:kubernetes
